@@ -54,11 +54,6 @@ init_detector.argtypes = [
         c_float,c_int,c_float,c_int]
 init_detector.restype = c_void_p
 
-#CWindow* detect_faces(void* pcn, unsigned char* raw_img,size_t rows, size_t cols, int *lwin)
-detect_faces = lib.detect_faces
-detect_faces.argtypes = [c_void_p, POINTER(c_ubyte),c_size_t,c_size_t,POINTER(c_int)]
-detect_faces.restype = POINTER(CWindow)
-
 #CWindow* detect_track_faces(void* pcn, unsigned char* raw_img,size_t rows, size_t cols, int *lwin)
 detect_track_faces = lib.detect_track_faces
 detect_track_faces.argtypes = [c_void_p, POINTER(c_ubyte),c_size_t,c_size_t,POINTER(c_int)]
@@ -77,6 +72,56 @@ BLUE=(255,0,0)
 RED=(0,0,255)
 GREEN=(0,255,0)
 YELLOW=(0,255,255)
+
+def draw_result(frame, face_count, windows):
+    for i in range(face_count.value):
+        DrawFace(windows[i],frame)
+        DrawPoints(windows[i],frame)
+
+    return frame
+
+def get_PCN_result(frame, detector):
+    face_count = c_int(0)
+    raw_data = frame.ctypes.data_as(POINTER(c_ubyte))
+    detect_faces = build_detect_faces()
+    windows = detect_faces(detector, raw_data, 
+            frame.shape[0], frame.shape[1],
+            pointer(face_count))
+
+    return face_count, windows
+
+
+def build_init_detector():
+    SetThreadCount(1)
+    path = '/usr/local/share/pcn/'
+    detection_model_path = c_str(path + "PCN.caffemodel")
+    pcn1_proto = c_str(path + "PCN-1.prototxt")
+    pcn2_proto = c_str(path + "PCN-2.prototxt")
+    pcn3_proto = c_str(path + "PCN-3.prototxt")
+    tracking_model_path = c_str(path + "PCN-Tracking.caffemodel")
+    tracking_proto = c_str(path + "PCN-Tracking.prototxt")
+    detector = init_detector(detection_model_path,pcn1_proto,pcn2_proto,pcn3_proto,
+		    	tracking_model_path,tracking_proto, 
+		    	40,1.45,0.5,0.5,0.98,30,0.9,1)
+    
+    return detector
+
+def build_detect_faces():
+    #CWindow* detect_faces(void* pcn, unsigned char* raw_img,size_t rows, size_t cols, int *lwin)
+    detect_faces = lib.detect_faces
+    detect_faces.argtypes = [c_void_p, POINTER(c_ubyte),c_size_t,c_size_t,POINTER(c_int)]
+    detect_faces.restype = POINTER(CWindow)
+
+    return detect_faces
+
+def get_win(img_path):
+    frame = cv2.imread(img_path)
+    face_count = c_int(0)
+    raw_data = frame.ctypes.data_as(POINTER(c_ubyte))
+    detect_faces = build_detect_faces()
+    windows = detect_faces(detector, raw_data, 
+            frame.shape[0], frame.shape[1],
+            pointer(face_count))
 
 def DrawFace(win,img):
     width = 2
@@ -156,14 +201,13 @@ if __name__=="__main__":
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     else:
-        detector = init_detector(detection_model_path,pcn1_proto,pcn2_proto,pcn3_proto,
-		    	tracking_model_path,tracking_proto, 
-		    	40,1.45,0.5,0.5,0.98,30,0.9,0)
+        detector = build_init_detector()
         for i in range(1, 27):
             frame = cv2.imread("imgs/" + str(i) + ".jpg")
             start = time.time()
             face_count = c_int(0)
             raw_data = frame.ctypes.data_as(POINTER(c_ubyte))
+            detect_faces = build_detect_faces()
             windows = detect_faces(detector, raw_data, 
                     frame.shape[0], frame.shape[1],
                     pointer(face_count))
@@ -172,9 +216,12 @@ if __name__=="__main__":
             for i in range(face_count.value):
                 DrawFace(windows[i],frame)
                 DrawPoints(windows[i],frame)
-            free_faces(windows)
-            cv2.imshow('PCN', frame)
-            cv2.waitKey()
+            cv2.imwrite("./sample_label.jpg", frame)
+            print("save sample")
+            break
+            # free_faces(windows)
+            # cv2.imshow('PCN', frame)
+            # cv2.waitKey()
 
     free_detector(detector)
 
