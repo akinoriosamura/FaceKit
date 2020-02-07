@@ -4,7 +4,7 @@ import sys
 import os
 import time
 
-from PyPCN import build_init_detector, get_PCN_result, draw_result
+from PyPCN import build_init_detector, get_PCN_result, draw_result, get_label_dict
 
 
 if __name__=="__main__":
@@ -14,6 +14,7 @@ if __name__=="__main__":
         frame = cv2.imread("imgs/" + str(i) + ".jpg")
         face_count, windows = get_PCN_result(frame, detector)
         frame = draw_result(frame, face_count, windows)
+        labels, angles = get_label_dict(face_count, windows)
         cv2.imwrite("./sample_label.jpg", frame)
         print("save sample")
         break

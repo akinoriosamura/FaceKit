@@ -73,6 +73,42 @@ RED=(0,0,255)
 GREEN=(0,255,0)
 YELLOW=(0,255,255)
 
+def get_label_dict(face_count, windows):
+    pcn_label = None
+    pcn_angle = None
+    pre_bb_w = 0
+    for i in range(face_count.value):
+        win = windows[i]
+        label_dict = {}
+        label_dict["bbox"] = {}
+        label_dict["bbox"]["x"] = win.x
+        label_dict["bbox"]["y"] = win.y
+        label_dict["bbox"]["w"] = win.width
+        label_dict["bbox"]["h"] = win.width
+        angle = win.angle
+
+        label_dict["landmark"] = {}
+        f = FeatEnam.NOSE
+        label_dict["landmark"]["nose"] = [win.points[f].x,win.points[f].y]
+        f = FeatEnam.EYE_LEFT
+        label_dict["landmark"]["eye_left"] = [win.points[f].x,win.points[f].y]
+        f = FeatEnam.EYE_RIGHT
+        label_dict["landmark"]["eye_right"] = [win.points[f].x,win.points[f].y]
+        f = FeatEnam.MOUTH_LEFT
+        label_dict["landmark"]["mouth_left"] = [win.points[f].x,win.points[f].y]
+        f = FeatEnam.MOUTH_RIGHT
+        label_dict["landmark"]["mouth_right"] = [win.points[f].x,win.points[f].y]
+        for i in range(9):
+            label = "chin_" + str(i)
+            label_dict["landmark"][label] = [win.points[i].x,win.points[i].y]
+
+        if win.width > pre_bb_w:
+            pcn_label = label_dict
+            pcn_angle = angle
+        pre_bb_w = win.width
+
+    return pcn_label, pcn_angle
+
 def draw_result(frame, face_count, windows):
     for i in range(face_count.value):
         DrawFace(windows[i],frame)

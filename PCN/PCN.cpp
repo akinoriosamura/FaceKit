@@ -161,7 +161,7 @@ void Impl::LoadModel(std::string modelDetect, std::string net1, std::string net2
                      std::string modelTrack, std::string netTrack)
 {
     caffe::Caffe::set_mode(caffe::Caffe::CPU);
-    google::InitGoogleLogging("VR");
+    google::InitGoogleLogging("./logs/VR");
     FLAGS_logtostderr = 0;
 
     net_[0].reset(new caffe::Net<float>(net1.c_str(), caffe::TEST));
