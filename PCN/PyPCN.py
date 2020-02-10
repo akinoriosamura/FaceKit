@@ -74,9 +74,8 @@ GREEN=(0,255,0)
 YELLOW=(0,255,255)
 
 def get_label_dict(face_count, windows):
-    pcn_label = None
-    pcn_angle = None
-    pre_bb_w = 0
+    pcn_labels = []
+    pcn_angles = []
     for i in range(face_count.value):
         win = windows[i]
         label_dict = {}
@@ -102,12 +101,10 @@ def get_label_dict(face_count, windows):
             label = "chin_" + str(i)
             label_dict["landmark"][label] = [win.points[i].x,win.points[i].y]
 
-        if win.width > pre_bb_w:
-            pcn_label = label_dict
-            pcn_angle = angle
-        pre_bb_w = win.width
+        pcn_labels.append(label_dict)
+        pcn_angles.append(angle)
 
-    return pcn_label, pcn_angle
+    return pcn_labels, pcn_angles
 
 def draw_result(frame, face_count, windows):
     for i in range(face_count.value):
